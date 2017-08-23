@@ -10,8 +10,9 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var tagListView:TagListView?
-    var selectedTagListView:TagListView?
+    let scrollView = UIScrollView()
+    let chooseTagListView = TagListView()
+    let selectedTagListView = TagListView()
 
     let category = [
     ["categoryId":"0",
@@ -31,25 +32,25 @@ class ViewController: UIViewController {
      "categoryName":"Nosy",
      "subcategory":[
         ["subcategoryId":"10",
-         "subcategoryName":"10Spa Sasd"],
+         "subcategoryName":"10Spa Sasdsad sadf"],
         ["subcategoryId":"11",
-         "subcategoryName":"11Sf Hdssd"],
+         "subcategoryName":"11Sf Hdssdasdfasdf "],
         ["subcategoryId":"12",
-         "subcategoryName":"12G,Pds"],
+         "subcategoryName":"12G,Pdsasd fasd f"],
         ["subcategoryId":"13",
          "subcategoryName":"13Pasd Asdsfd SDsdesdgf"],
         ["subcategoryId":"14",
-         "subcategoryName":"14Spa Sasd"],
+         "subcategoryName":"14Spa Sasd sadf as "],
         ["subcategoryId":"15",
-         "subcategoryName":"15Sf Lopp"],
+         "subcategoryName":"15Sf Loppasd asdf "],
         ["subcategoryId":"16",
          "subcategoryName":"16G"],
         ["subcategoryId":"17",
-         "subcategoryName":"17Pasd Asdsfd SDsdesdgf"],
+         "subcategoryName":"17Pasd Asdsfd SDsdesdga sdf f"],
         ["subcategoryId":"18",
          "subcategoryName":"18Sp"],
         ["subcategoryId":"19",
-         "subcategoryName":"19Sf Jsdds DSds"]
+         "subcategoryName":"19Sf Jsdds DSdsasdf asd "]
         ]
         ],
     
@@ -58,18 +59,23 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        selectedTagListView = TagListView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 0))
-        selectedTagListView?.backgroundColor = UIColor.red
-        view.addSubview(selectedTagListView!)
-        selectedTagListView?.isDeleteMode = true
-        selectedTagListView?.delegate = self
+        scrollView.frame = view.bounds
         
-        tagListView = TagListView(frame: CGRect(x: 0, y: 300, width: view.bounds.width, height: 10))
-        tagListView?.backgroundColor = UIColor.green
-        view.addSubview(tagListView!)
-        tagListView?.isDeleteMode = false
-        tagListView?.dataSource = fetchCategoryTagModel()
-        tagListView?.delegate = self
+        selectedTagListView.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: 0)
+        selectedTagListView.backgroundColor = UIColor.red
+        selectedTagListView.isDeleteMode = true
+        selectedTagListView.delegate = self
+        
+        chooseTagListView.frame = CGRect(x: 0, y: 300, width: view.bounds.width, height: 10)
+        chooseTagListView.backgroundColor = UIColor.green
+        chooseTagListView.isDeleteMode = false
+        chooseTagListView.dataSource = fetchCategoryTagModel()
+        chooseTagListView.delegate = self
+        
+        view.addSubview(scrollView)
+        scrollView.addSubview(selectedTagListView)
+        scrollView.addSubview(chooseTagListView)
+        refresh()
     }
     
     func fetchCategoryTagModel() -> [TagModel] {
@@ -108,37 +114,51 @@ class ViewController: UIViewController {
 
 extension ViewController:TagModelDelegate {
     func tagClick(tagListView:TagListView, tag: TagModel) {
-        if tagListView == self.tagListView {
-            tagListView.filterData.append(tag)
-            tagListView.setupSubviews()
+        if tagListView == chooseTagListView {
+            chooseTagListView.filterData.append(tag)
             
             if tag.isCategoryTag {
-                tagListView.filterData.removeAll()
-                tagListView.dataSource = fetchSubcategoryTagModel(categoryID: tag.id)
+                chooseTagListView.filterData.removeAll()
+                chooseTagListView.dataSource = fetchSubcategoryTagModel(categoryID: tag.id)
             }
             
             
             // add to Selected Lsit
-            if selectedTagListView?.dataSource == nil {
-                selectedTagListView?.dataSource = [TagModel]()
-            }
             let tagModel = TagModel(isCategoryTag: tag.isCategoryTag, id: tag.id, title: tag.title, tag: tag.tag, fontSize: tag.fontSize, height: tag.height, maxWidth: tag.maxWidth, isDeleteMode: true)
-            selectedTagListView?.dataSource?.append(tagModel)
-            selectedTagListView?.dataSource = selectedTagListView?.dataSource
+            selectedTagListView.dataSource.append(tagModel)
+            
+            refresh()
         }
-        
-        
     }
     
     func tagDeleteClick(tagListView:TagListView, tag: TagModel) {
         
-//        if tagListView == self.selectedTagListView {
-//            if let str = tagListView?.dataSource?.filter({ $0 == tag.title }).first {
-//                tagListView.dataSource?.remove(at: (tagListView?.dataSource?.index(of: str))!)
-//                tagListView.dataSource = tagListView?.dataSource
-//            }
-//        }
-        
+        if tagListView == selectedTagListView {
+            
+            if let filterTagModel = chooseTagListView.filterData.filter({ $0.id == tag.id }).first,
+                let index = chooseTagListView.filterData.index(of: filterTagModel) {
+                chooseTagListView.filterData.remove(at: index)
+            }
+            
+            if tag.isCategoryTag {
+                selectedTagListView.dataSource.removeAll()
+                self.chooseTagListView.dataSource = fetchCategoryTagModel()
+            } else {
+                if let tagModel = selectedTagListView.dataSource.filter({ $0.id == tag.id }).first,
+                    let index = selectedTagListView.dataSource.index(of: tagModel) {
+                    selectedTagListView.dataSource.remove(at: index)
+                }
+            }
+            
+            refresh()
+        }
+    }
+    
+    func refresh() {
+        selectedTagListView.refreshSubviews()
+        chooseTagListView.refreshSubviews()
+        chooseTagListView.frame = CGRect(origin: CGPoint(x:selectedTagListView.frame.minX, y: selectedTagListView.frame.maxY), size: chooseTagListView.frame.size)
+        scrollView.contentSize = CGSize(width: scrollView.bounds.width, height: chooseTagListView.frame.maxY - scrollView.frame.minY)
     }
 }
 

@@ -27,12 +27,7 @@ class TagListView: UIView {
         }
     }
     
-    var dataSource:[TagModel]? {
-        didSet{
-            setupSubviews()
-        }
-    }
-    
+    var dataSource = [TagModel]()
     var filterData = [TagModel]()
     
     override init(frame: CGRect) {
@@ -45,10 +40,7 @@ class TagListView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setupSubviews() {
-        guard let dataSource = dataSource else {
-            return
-        }
+    private func setupSubviews() {
         
         for subView in subviews {
             subView.removeFromSuperview()
@@ -68,7 +60,6 @@ class TagListView: UIView {
         var yOffset:CGFloat = 0
         
         tagArray.enumerated().forEach({ (offset, tagModel) in
-            
             if lastTagFrame.maxX + margin + tagMargin + tagModel.size.width > bounds.width {
                 xOffset = margin
                 yOffset = lastTagFrame.maxY + margin
@@ -91,8 +82,17 @@ class TagListView: UIView {
             lastTagFrame = tagFrame
             if offset == tagArray.count - 1 {
                 allTagSize = CGSize(width: bounds.width, height: lastTagFrame.maxY + margin)
-                frame.size = allTagSize
             }
         })
+        
+        if tagArray.count == 0 {
+            allTagSize = CGSize(width: bounds.width, height: 0)
+        }
+        frame.size = allTagSize
+    }
+    
+    // public
+    func refreshSubviews() {
+        setupSubviews()
     }
 }
